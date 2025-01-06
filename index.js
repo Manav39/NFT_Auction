@@ -1,32 +1,19 @@
-// Using 'require' syntax for CommonJS
-const { Alchemy, Network } = require("alchemy-sdk");
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const nftRoutes = require("./routes/nftRoutes");
 
-const config = {
-  apiKey: "6-_Vzfb_BgKE465ls6XhT8Cxf2y6JiDU",
-  network: Network.ETH_SEPOLIA, // Ensure this is the correct network
-};
-const alchemy = new Alchemy(config);
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-const main = async () => {
-  try {
-    const nfts = await alchemy.nft.getNftsForContract(
-      "0x74F8bfdE751C736a1D3E24037085F02E29Cd9d80"
-    );
-    // Print NFTs
-    console.log(nfts);
-  } catch (error) {
-    console.error("Error fetching NFTs:", error);
-  }
-};
+app.use("/api", nftRoutes);
 
-const runMain = async () => {
-  try {
-    await main();
-    process.exit(0);
-  } catch (error) {
-    console.error(error);
-    process.exit(1);
-  }
-};
+// MongoDB connection setup
+const connectDB = require("./config/db");
 
-runMain();
+connectDB();
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
