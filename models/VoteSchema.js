@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const votesSchema = new mongoose.Schema({
   voter: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // User casting the votes
   selectedNFTs: [

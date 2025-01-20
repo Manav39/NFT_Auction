@@ -1,5 +1,6 @@
 const { Alchemy, Network } = require("alchemy-sdk");
 const Nft = require("../models/nftSchema");
+const Votes = require("../models/VoteSchema");
 
 const config = {
   apiKey: "6-_Vzfb_BgKE465ls6XhT8Cxf2y6JiDU",
