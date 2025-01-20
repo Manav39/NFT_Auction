@@ -48,4 +48,86 @@ const getNftsForContract = async (req, res) => {
   }
 };
 
-module.exports = { fetchNftsForContract, getNftsForContract };
+const addNewNft = async (req, res) => {
+  const {
+    contractAddress,
+    tokenId,
+    name,
+    description,
+    tokenUri,
+    timeLastUpdated,
+  } = req.body;
+
+  try {
+    const nftExists = await Nft.findOne({ contractAddress, tokenId });
+    if (nftExists) {
+      return res
+        .status(400)
+        .json({ message: "NFT already exists in the database." });
+    }
+
+    const newNft = new Nft({
+      contractAddress,
+      tokenId,
+      name,
+      description,
+      tokenUri,
+      timeLastUpdated,
+    });
+    await newNft.save();
+    res.status(201).json({ message: "NFT added successfully!", nft: newNft });
+  } catch (error) {
+    console.error("Error adding NFT:", error);
+    res.status(500).json({ message: "Error adding NFT", error });
+  }
+};
+
+const voteForNfts = async (req, res) => {
+  const { voterId, selectedNFTs } = req.body;
+
+  if (!selectedNFTs || selectedNFTs.length > 3) {
+    return res
+      .status(400)
+      .json({ message: "You can vote for up to 3 NFTs only." });
+  }
+
+  try {
+    const vote = new Votes({ voter: voterId, selectedNFTs });
+    await vote.save();
+
+    await Nft.updateMany(
+      { _id: { $in: selectedNFTs } },
+      { $inc: { votes: 1 } }
+    );
+
+    res.status(201).json({ message: "Votes cast successfully!" });
+  } catch (error) {
+    console.error("Error casting votes:", error);
+    res.status(500).json({ message: "Error casting votes", error });
+  }
+};
+
+const getNftsWithVoteCounts = async (req, res) => {
+  const { parameter } = req.query;
+
+  try {
+    let nfts;
+    if (parameter === "all") {
+      nfts = await Nft.find().sort({ votes: -1 });
+    } else {
+      nfts = await Nft.find().sort({ votes: -1 }).limit(10);
+    }
+    res.json(nfts);
+  } catch (error) {
+    console.error("Error retrieving NFTs:", error);
+    res.status(500).json({ message: "Error retrieving NFTs", error });
+  }
+};
+
+module.exports = {
+  fetchNftsForContract,
+  getNftsForContract,
+  addNewNft,
+  voteForNfts,
+  getNftsWithVoteCounts,
+};

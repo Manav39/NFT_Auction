@@ -7,6 +7,7 @@ const nftSchema = new mongoose.Schema({
   description: { type: String, required: true },
   tokenUri: { type: String, required: true },
   timeLastUpdated: { type: Date, required: true },
+  votes: { type: Number, default: 0 },
 });
 
 const Nft = mongoose.model("Nft", nftSchema);
