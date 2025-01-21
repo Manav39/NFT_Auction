@@ -1,6 +1,7 @@
 const { Alchemy, Network } = require("alchemy-sdk");
 const Nft = require("../models/nftSchema");
 const Votes = require("../models/VoteSchema");
+const Team = require("../models/teamSchema");
 
 const config = {
   apiKey: "6-_Vzfb_BgKE465ls6XhT8Cxf2y6JiDU",
@@ -125,10 +126,104 @@ const getNftsWithVoteCounts = async (req, res) => {
   }
 };
 
+const discardNft = async (req, res) => {
+  const { nftId } = req.query;
+
+  try {
+    await Nft.deleteOne({ _id: nftId });
+    res.status(200).json({ message: "NFT discarded successfully" });
+  } catch (error) {
+    console.error("Error discarding NFT:", error);
+    res.status(500).json({ message: "Error discarding NFT", error });
+  }
+};
+
+const addTeam = async (req, res) => {
+  const {
+    teamName,
+    nftHoldCount = 0,
+    currentBalance = 0,
+    totalInvestment = 0,
+  } = req.body;
+
+  try {
+    const newTeam = new Team({
+      teamName,
+      nftHoldCount,
+      currentBalance,
+      totalInvestment,
+    });
+
+    await newTeam.save();
+    res.status(201).json({ message: "Team added successfully", team: newTeam });
+  } catch (error) {
+    console.error("Error adding team:", error);
+    res.status(500).json({ message: "Error adding team", error });
+  }
+};
+
+const getTeamsByTotalInvestment = async (req, res) => {
+  try {
+    const teams = await Team.find().sort({ totalInvestment: -1 });
+    res.status(200).json(teams);
+  } catch (error) {
+    console.error("Error fetching teams:", error);
+    res.status(500).json({ message: "Error fetching teams", error });
+  }
+};
+
+const getAllTeams = async (req, res) => {
+  try {
+    const teams = await Team.find();
+    res.status(200).json(teams);
+  } catch (error) {
+    console.error("Error fetching all teams:", error);
+    res.status(500).json({ message: "Error fetching all teams", error });
+  }
+};
+
+const modifyTeamNftHoldCount = async (req, res) => {
+  const { teamId, biddingPrice } = req.body;
+
+  if (!teamId || !biddingPrice) {
+    return res
+      .status(400)
+      .json({ message: "Team ID and bidding price are required" });
+  }
+
+  try {
+    const team = await Team.findById(teamId);
+
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    team.nftHoldCount += 1;
+    team.currentBalance = team.currentBalance - biddingPrice;
+    team.totalInvestment = team.totalInvestment + biddingPrice;
+
+    await team.save();
+
+    res
+      .status(200)
+      .json({ message: "Team NFT hold count updated successfully", team });
+  } catch (error) {
+    console.error("Error modifying team NFT hold count:", error);
+    res
+      .status(500)
+      .json({ message: "Error modifying team NFT hold count", error });
+  }
+};
+
 module.exports = {
   fetchNftsForContract,
   getNftsForContract,
   addNewNft,
   voteForNfts,
   getNftsWithVoteCounts,
+  discardNft,
+  addTeam,
+  getTeamsByTotalInvestment,
+  getAllTeams,
+  modifyTeamNftHoldCount,
 };
