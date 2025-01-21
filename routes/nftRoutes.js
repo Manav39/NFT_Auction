@@ -11,6 +11,8 @@ const {
   getTeamsByTotalInvestment,
   getAllTeams,
   modifyTeamNftHoldCount,
+  addUser,
+  getAllUsers,
 } = require("../controllers/nftController");
 
 router.post("/fetch-nfts/:contractAddress", fetchNftsForContract);
@@ -23,5 +25,7 @@ router.post("/add-team", addTeam);
 router.get("/get-top-teams", getTeamsByTotalInvestment);
 router.get("/get-all-teams", getAllTeams);
 router.put("/modify-team", modifyTeamNftHoldCount);
+router.post("/add-user", addUser);
+router.get("/get-all-users", getAllUsers);
 
 module.exports = router;

@@ -2,6 +2,7 @@ const { Alchemy, Network } = require("alchemy-sdk");
 const Nft = require("../models/nftSchema");
 const Votes = require("../models/VoteSchema");
 const Team = require("../models/teamSchema");
+const User = require("../models/userSchema");
 
 const config = {
   apiKey: "6-_Vzfb_BgKE465ls6XhT8Cxf2y6JiDU",
@@ -215,6 +216,37 @@ const modifyTeamNftHoldCount = async (req, res) => {
   }
 };
 
+const addUser = async (walletAddress, name) => {
+  try {
+    const existingUser = await User.findOne({ walletAddress });
+    if (existingUser) {
+      return { message: "User with this wallet address already exists" };
+    }
+
+    const newUser = new User({
+      walletAddress,
+      name,
+      // ownedNFTs: [],
+    });
+
+    await newUser.save();
+    return { message: "User added successfully", user: newUser };
+  } catch (error) {
+    console.error("Error adding user:", error);
+    return { message: "Error adding user", error };
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  try {
+    const teams = await User.find();
+    res.status(200).json(teams);
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    res.status(500).json({ message: "Error fetching all users", error });
+  }
+};
+
 module.exports = {
   fetchNftsForContract,
   getNftsForContract,
@@ -226,4 +258,6 @@ module.exports = {
   getTeamsByTotalInvestment,
   getAllTeams,
   modifyTeamNftHoldCount,
+  addUser,
+  getAllUsers,
 };
