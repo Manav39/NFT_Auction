@@ -53,6 +53,7 @@ const getNftsForContract = async (req, res) => {
 
 const addNewNft = async (req, res) => {
   const {
+    walletAddress,
     contractAddress,
     tokenId,
     name,
@@ -62,12 +63,12 @@ const addNewNft = async (req, res) => {
   } = req.body;
 
   try {
-    const nftExists = await Nft.findOne({ contractAddress, tokenId });
-    if (nftExists) {
-      return res
-        .status(400)
-        .json({ message: "NFT already exists in the database." });
-    }
+    // const nftExists = await Nft.findOne({ contractAddress, tokenId });
+    // if (nftExists) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: "NFT already exists in the database." });
+    // }
 
     const newNft = new Nft({
       contractAddress,
@@ -85,28 +86,52 @@ const addNewNft = async (req, res) => {
   }
 };
 
-const voteForNfts = async (req, res) => {
-  const { voterId, selectedNFTs } = req.body;
-
-  if (!selectedNFTs || selectedNFTs.length > 3) {
-    return res
-      .status(400)
-      .json({ message: "You can vote for up to 3 NFTs only." });
-  }
-
+const getAllNfts = async (req, res) => {
   try {
-    const vote = new Votes({ voter: voterId, selectedNFTs });
-    await vote.save();
-
-    await Nft.updateMany(
-      { _id: { $in: selectedNFTs } },
-      { $inc: { votes: 1 } }
-    );
-
-    res.status(201).json({ message: "Votes cast successfully!" });
+    const nfts = await Nft.find();
+    res.status(200).json(nfts);
   } catch (error) {
-    console.error("Error casting votes:", error);
-    res.status(500).json({ message: "Error casting votes", error });
+    console.error("Error fetching all nfts:", error);
+    res.status(500).json({ message: "Error fetching all nfts", error });
+  }
+};
+
+const voteForNfts = async (req, res) => {
+  const { voterId, selectedNFT } = req.body; // Now expecting a single selectedNFT
+  try {
+    const existingVote = await Votes.findOne({ voter: voterId });
+
+    // If the voter has already voted
+    if (existingVote) {
+      if (existingVote.selectedNFTs.length >= 3) {
+        return res
+          .status(400)
+          .json({ message: "You can vote for a maximum of 3 NFTs." });
+      }
+
+      // If not, add the new NFT to the selectedNFTs array
+      existingVote.selectedNFTs.push(selectedNFT);
+
+      // Save the updated vote record
+      await existingVote.save();
+    } else {
+      // If this is the first time voting, create a new vote record with the selected NFT
+      const vote = new Votes({
+        voter: voterId,
+        selectedNFTs: selectedNFT,
+      });
+
+      // Save the new vote record
+      await vote.save();
+    }
+
+    // Update the votes for the selected NFT in the Nft collection
+    await Nft.updateOne({ _id: selectedNFT }, { $inc: { votes: 1 } });
+
+    res.status(201).json({ message: "Vote cast successfully!" });
+  } catch (error) {
+    console.error("Error casting vote:", error);
+    res.status(500).json({ message: "Error casting vote", error });
   }
 };
 
@@ -216,31 +241,36 @@ const modifyTeamNftHoldCount = async (req, res) => {
   }
 };
 
-const addUser = async (walletAddress, name) => {
+const addUser = async (req, res) => {
+  const { walletAddress, name } = req.body;
   try {
     const existingUser = await User.findOne({ walletAddress });
     if (existingUser) {
-      return { message: "User with this wallet address already exists" };
+      return res
+        .status(400)
+        .json({ message: "User with this wallet address already exists" });
     }
 
     const newUser = new User({
       walletAddress,
       name,
-      // ownedNFTs: [],
+      ownedNFTs: [],
     });
 
     await newUser.save();
-    return { message: "User added successfully", user: newUser };
+    res.status(201).json({ message: "Team added successfully", user: newUser });
   } catch (error) {
     console.error("Error adding user:", error);
-    return { message: "Error adding user", error };
+    res.status(500).json({ message: "Error adding user", error });
   }
 };
 
 const getAllUsers = async (req, res) => {
   try {
-    const teams = await User.find();
-    res.status(200).json(teams);
+    // await User.deleteMany({});
+    // await Votes.deleteMany({});
+    const users = await User.find();
+    res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching all users:", error);
     res.status(500).json({ message: "Error fetching all users", error });
@@ -260,4 +290,5 @@ module.exports = {
   modifyTeamNftHoldCount,
   addUser,
   getAllUsers,
+  getAllNfts,
 };
