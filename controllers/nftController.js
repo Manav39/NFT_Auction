@@ -266,7 +266,7 @@ const addUser = async (req, res) => {
     });
 
     await newUser.save();
-    res.status(201).json({ message: "Team added successfully", user: newUser });
+    res.status(201).json({ message: "User added successfully", user: newUser });
   } catch (error) {
     console.error("Error adding user:", error);
     res.status(500).json({ message: "Error adding user", error });
