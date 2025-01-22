@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const nftSchema = new mongoose.Schema({
+  walletAddress: { type: String }, // User's wallet address
   contractAddress: { type: String, required: true },
   tokenId: { type: String, required: true },
   name: { type: String, required: true },

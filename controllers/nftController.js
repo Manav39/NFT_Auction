@@ -63,14 +63,15 @@ const addNewNft = async (req, res) => {
   } = req.body;
 
   try {
-    // const nftExists = await Nft.findOne({ contractAddress, tokenId });
-    // if (nftExists) {
-    //   return res
-    //     .status(400)
-    //     .json({ message: "NFT already exists in the database." });
-    // }
+    const nftExists = await Nft.findOne({ walletAddress });
+    if (nftExists) {
+      return res
+        .status(400)
+        .json({ message: "NFT already exists in the database." });
+    }
 
     const newNft = new Nft({
+      walletAddress,
       contractAddress,
       tokenId,
       name,
@@ -97,7 +98,7 @@ const getAllNfts = async (req, res) => {
 };
 
 const voteForNfts = async (req, res) => {
-  const { voterId, selectedNFT } = req.body; // Now expecting a single selectedNFT
+  const { walletAddress, voterId, selectedNFT } = req.body; // Now expecting a single selectedNFT
   try {
     const existingVote = await Votes.findOne({ voter: voterId });
 
@@ -107,6 +108,13 @@ const voteForNfts = async (req, res) => {
         return res
           .status(400)
           .json({ message: "You can vote for a maximum of 3 NFTs." });
+      }
+
+      const ownNft = await Nft.findById(selectedNFT);
+      if (ownNft?.walletAddress === walletAddress) {
+        return res
+          .status(400)
+          .json({ message: "You can't vote for your own NFT." });
       }
 
       // If not, add the new NFT to the selectedNFTs array
