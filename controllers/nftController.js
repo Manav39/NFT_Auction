@@ -100,6 +100,13 @@ const getAllNfts = async (req, res) => {
 const voteForNfts = async (req, res) => {
   const { walletAddress, voterId, selectedNFT } = req.body; // Now expecting a single selectedNFT
   try {
+    const ownNft = await Nft.findById(selectedNFT);
+    if (ownNft?.walletAddress === walletAddress) {
+      return res
+        .status(400)
+        .json({ message: "You can't vote for your own NFT." });
+    }
+
     const existingVote = await Votes.findOne({ voter: voterId });
 
     // If the voter has already voted
@@ -109,14 +116,6 @@ const voteForNfts = async (req, res) => {
           .status(400)
           .json({ message: "You can vote for a maximum of 3 NFTs." });
       }
-
-      const ownNft = await Nft.findById(selectedNFT);
-      if (ownNft?.walletAddress === walletAddress) {
-        return res
-          .status(400)
-          .json({ message: "You can't vote for your own NFT." });
-      }
-
       // If not, add the new NFT to the selectedNFTs array
       existingVote.selectedNFTs.push(selectedNFT);
 
