@@ -5,6 +5,7 @@ const teamSchema = new mongoose.Schema({
   nftHoldCount: { type: Number, default: 0 },
   currentBalance: { type: Number, default: 0 },
   totalInvestment: { type: Number, default: 0 },
+  cumulativeVoteCount: { type: Number, default: 0 },
 });
 
 const Team = mongoose.model("Team", teamSchema);

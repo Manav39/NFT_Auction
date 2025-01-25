@@ -197,7 +197,7 @@ const addTeam = async (req, res) => {
 
 const getTeamsByTotalInvestment = async (req, res) => {
   try {
-    const teams = await Team.find().sort({ totalInvestment: -1 });
+    const teams = await Team.find().sort({ cumulativeVoteCount: -1 });
     res.status(200).json(teams);
   } catch (error) {
     console.error("Error fetching teams:", error);
@@ -216,9 +216,9 @@ const getAllTeams = async (req, res) => {
 };
 
 const modifyTeamNftHoldCount = async (req, res) => {
-  const { teamId, biddingPrice } = req.body;
+  const { teamId, biddingPrice, nftVoteCount } = req.body;
 
-  if (!teamId || !biddingPrice) {
+  if (!teamId || !biddingPrice || !nftVoteCount) {
     return res
       .status(400)
       .json({ message: "Team ID and bidding price are required" });
@@ -234,6 +234,7 @@ const modifyTeamNftHoldCount = async (req, res) => {
     team.nftHoldCount += 1;
     team.currentBalance = team.currentBalance - biddingPrice;
     team.totalInvestment = team.totalInvestment + biddingPrice;
+    team.cumulativeVoteCount = team.cumulativeVoteCount + nftVoteCount;
 
     await team.save();
 
