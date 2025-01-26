@@ -111,7 +111,7 @@ const voteForNfts = async (req, res) => {
 
     // If the voter has already voted
     if (existingVote) {
-      if (existingVote.selectedNFTs.length >= 3) {
+      if (existingVote.selectedNFTs.length >= 5) {
         return res
           .status(400)
           .json({ message: "You can vote for a maximum of 3 NFTs." });
